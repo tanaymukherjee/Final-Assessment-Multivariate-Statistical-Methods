@@ -3,7 +3,7 @@ TITLE 'Stock price dataset';
 
 DATA stock;
   INFILE "/folders/myfolders/data/stock_price.txt" DLM='09'x;
-  INPUT stock $ JPM Citi WF RDS EM;
+  INPUT JPM Citi WF RDS EM;
   RUN;
   
 
@@ -13,20 +13,14 @@ PROC PRINCOMP COV OUT=RESULTS plots(ncomp =2)=score(ellipse);
   VAR JPM Citi WF RDS EM;
 RUN;
 
-PROC PLOT;
-  PLOT PRIN2*PRIN1;
-RUN; 
 
 proc print data=RESULTS;
-var PRIN1 PRIN2;
+var PRIN1 PRIN2 PRIN3 PRIN4 PRIN5 ;
 RUN;
+
 
 
 /* PCA USING R */
-PROC PRINCOMP OUT=RESULTS Plot=scores(ellipse);
+PROC PRINCOMP plots(ncomp =2)=score(ellipse);
   VAR JPM Citi WF RDS EM;
-RUN;
-
-PROC PLOT ;
-  PLOT PRIN2*PRIN1;
 RUN;
