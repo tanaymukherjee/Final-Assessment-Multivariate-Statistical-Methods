@@ -38,10 +38,9 @@ PROC GLM;
   CLASS group;
   MODEL X1 X2 X3 X4 = group;
   CONTRAST '1 v/s 2&3'
-    group -1 0.5 0.5;
+    group -1 .5 .5;
   CONTRAST '2 v/s 3'
-  	group 0 -1 -1;
-  
+    group 0 1 -1;
   MANOVA H=group/PRINTE PRINTH MSTAT=EXACT;
 RUN;
 
@@ -62,7 +61,7 @@ var X1 X2 X3 X4;
 RUN;
 
 
-TITLE 'Discriminant Analysis of IRIS Data';
+TITLE 'Discriminant Analysis of Iris Data';
 proc discrim data=iris method=npar k=5 crossvalidate;
 class group;
 var X1 X2 X3 X4;
