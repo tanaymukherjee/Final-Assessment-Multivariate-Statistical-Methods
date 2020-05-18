@@ -1,106 +1,115 @@
-TITLE 'Question 4';
-TITLE 'University dataset';
+/*Question 4 university*/
 
-DATA univ;
+DATA university;
   INFILE "/folders/myfolders/DATA/university.txt" DLM=' ';
-  INPUT university $ X1 X2 X3 X4 X5 X6;
+  INPUT school $ x1 x2 x3 x4 x5 x6;
   LABEL X1='Average SAT' X2='Top 10%' X3='% Accepted' X4='Student Faculty Ratio' X5='Estimated Annual Expense' X6='Graduation Rate %';
-RUN;
+run;
+
+/*standardization of data */
+proc standard data=university out=university mean=0 std=1;
+var x1 x2 x3 x4 x5 x6;
+run;
+proc print data=university;
+title '---------------------- Standardized Data ----------------------';
+run;
+
+/* Part a average linkage method for hierarchical clustering  */
+proc cluster data=university outtree=tree_school method=average nonorm;
+title '-------------- Part A: Hierarchical Clustering Wtih Average Linkage ----------------------';
+   var x1 x2 x3 x4 x5 x6;
+   id school;
+run;
 
 
-PROC standard DATA=univ OUT=univ2 mean=0 std=1;
-VAR X1 X2 X3 X4 X5 X6;
-RUN;
-
-PROC print DATA=univ2;
-RUN;
-
-
-TITLE'Q4(a)';
-PROC cluster DATA=univ2 METHOD=average OUTTREE=ProTree;
-VAR X1 X2 X3 X4 X5 X6;
-id university;
-RUN;
+/* Before K-mean clustering  */
+/*  Use principal components to guess the number of initial clusters to use   */
+proc princomp data=university out=ProPC;
+title '-------------- PCA to see how many cluster to use for k-mean clustering ----------------------';
+var  x1 x2 x3 x4 x5 x6;
+run;
+proc sgplot	 data=ProPC;
+scatter y = prin2 x = prin1 / datalabel=school;
+label prin2 = 'Z2' prin1='Z1';
+run;quit;
 
 
-TITLE'Q4(b)';
-PROC fastclus DATA=univ2 radius=1.5 maxc=4 replace=none maxiter=10 OUT=univ_cluster ;
-VAR X1 X2 X3 X4 X5 X6;
-id university;
-RUN;
 
-PROC sort DATA=univ_cluster;
+
+
+
+
+/* Part b K-mean cluster:  First 3 observations for getting seeds */
+proc fastclus data=university radius=1.5 maxc=3 replace=none maxiter=10 out=Clus_out ;
+title '--------- Part B: K-mean Clustering, Seeds=first 3 observations with Radius r=1.5 ----------';
+var x1 x2 x3 x4 x5 x6;
+id school;
+run;
+proc sort data=Clus_out;
 by cluster distance;
-RUN;
+run;
 
-PROC candisc DATA=univ_cluster noprint OUT=ProCan(keep=university cluster Can1 Can2);
+proc means data=newdata;
+by cluster;
+output out=Seeds mean=x1 x2 x3 x4 x5 x6;
+var x1 x2 x3 x4 x5 x6;
+run;
+
+proc candisc data=Clus_out noprint out=ProCan(keep=school cluster Can1 Can2);
 class cluster;
-VAR X1 X2 X3 X4 X5 X6;
-RUN;
+var  x1 x2 x3 x4 x5 x6;
+run;
 
-goptions reset=all;
-symbol pointlabel=("#university") font=, value=dot;
-PROC sgplot DATA=ProCan;
-plot Can2*Can1=cluster /  vaxis=axis2 haxis=axis1 nolegend;
-axis1 label=("z1" justify=center);
-axis2 label=("z2" justify=center r=0 a=90);
-RUN;QUIT;
+proc sgplot data=ProCan;
+scatter y=Can2 x=Can1 / group=cluster datalabel=school;
+label Can1="z1" Can2="z2";
+run;quit;
 
-
-PROC print DATA=univ_cluster;
-VAR university cluster distance;
-RUN;
+proc print data=Clus_out;
+var school cluster distance;
+run;
+ 
 
 
-TITLE'Q4(c)';
-/*  METHOD #4 for getting seeds:Use Average Linkage to get cluster centriods   */
-PROC cluster DATA=univ2 METHOD=average OUTTREE=ProTree noprint;
-VAR X1 X2 X3 X4 X5 X6;
-id university;
-RUN;
 
-PROC tree DATA=ProTree nclusters=4 OUT=newDATA noprint;
-id university;
-copy X1 X2 X3 X4 X5 X6;
-RUN;
-
-PROC sort DATA=newDATA;
+/*  Part C: Use Average Linkage to get cluster centriods   */
+title '-------- Part C: Use Average Linkage to get cluster centriods as seeds ------------';
+proc cluster data=university method=average outtree=ProTree noprint;
+var x1 x2 x3 x4 x5 x6;
+id school;
+run;
+proc tree data=ProTree nclusters=3 out=newdata noprint;
+id school;
+copy x1 x2 x3 x4 x5 x6;
+run;
+proc sort data=newdata;
 by cluster;
-RUN;
-
-PROC print DATA=newDATA;
-VAR university cluster;
-RUN;
-
-PROC means DATA=newDATA noprint;
+run;
+proc print data=newdata;
+var school cluster;
+run;
+proc means data=newdata;
 by cluster;
-OUTput OUT=Seeds mean=X1 X2 X3 X4 X5 X6;
-VAR X1 X2 X3 X4 X5 X6;
-RUN;
+output out=Seeds mean=x1 x2 x3 x4 x5 x6;
+var x1 x2 x3 x4 x5 x6;
+run;
 
-PROC fastclus DATA=univ2 maxc=4 maxiter=50 seed=Seeds OUT=univ_cluster;
-VAR X1 X2 X3 X4 X5 X6;
-id university;
-RUN;
+proc fastclus data=university maxc=3 maxiter=50 seed=Seeds out=Clus_out;
+var x1 x2 x3 x4 x5 x6;
+id school;
+run;
+proc sort data=Clus_out;
+by cluster distance;
+run;
+proc print data=Clus_out;
+var school cluster distance;
+run;
 
-PROC sort DATA=univ_cluster;
-by cluster;
-RUN;
-
-PROC print DATA=univ_cluster;
-VAR university cluster;
-RUN;
-
-PROC candisc DATA=univ_cluster noprint OUT=ProCan(keep=university cluster Can1 Can2);
+proc candisc data=Clus_out noprint out=ProCan(keep=school cluster Can1 Can2);
 class cluster;
-VAR X1 X2 X3 X4 X5 X6;
-RUN;
-
-goptions reset=all;
-symbol pointlabel=("#university") font=, value=dot;
-
-PROC sgplot DATA=ProCan;
-plot Can2*Can1=cluster /  vaxis=axis2 haxis=axis1 nolegend;
-axis1 label=("z1" justify=center);
-axis2 label=("z2" justify=center r=0 a=90);
-RUN;QUIT;
+var x1 x2 x3 x4 x5 x6;
+run;
+proc sgplot data=ProCan;
+scatter y=Can2 x=Can1 / group=cluster datalabel=school;
+label Can1="z1" Can2="z2";
+run;quit;
