@@ -16,5 +16,7 @@ ability, respectively. The data are given in file salesman.txt.
 ## Exercise 4:
 The file university.txt gives the data on some universities for certain variables used to compare or rank major universities. These variables include X1 = average SAT score of new freshmen, X2 = percentage of new freshmen in top 10% of high school class, X3 = percentage of applicants accepted, X4 = student-faculty ratio, X5 = estimated annual expenses and X6 = graduation rate (%). Because SAT and Expenses are on a much different scale from that of the other variables, you need to standardize the data first.
 
+**Answers to all the questions above is provided in the analysis folder [here](https://github.com/tanaymukherjee/Final-Assessment-Multivariate-Statistical-Methods/blob/master/Analysis/STA%209705_Final%20Exam_TM.pdf)**
+
 ## Submission to:
 Prof. Yu Yue
